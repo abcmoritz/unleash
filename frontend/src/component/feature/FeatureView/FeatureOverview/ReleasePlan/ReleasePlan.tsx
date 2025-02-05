@@ -15,6 +15,7 @@ import { formatUnknownError } from 'utils/formatUnknownError';
 import { ReleasePlanRemoveDialog } from './ReleasePlanRemoveDialog';
 import { ReleasePlanMilestone } from './ReleasePlanMilestone/ReleasePlanMilestone';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
+import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
 
 const StyledContainer = styled('div', {
     shouldForwardProp: (prop) => prop !== 'readonly',
@@ -94,6 +95,7 @@ export const ReleasePlan = ({
     const { removeReleasePlanFromFeature, startReleasePlanMilestone } =
         useReleasePlansApi();
     const { setToastData, setToastApiError } = useToast();
+    const { trackEvent } = usePlausibleTracker();
 
     const [removeOpen, setRemoveOpen] = useState(false);
 
@@ -109,6 +111,14 @@ export const ReleasePlan = ({
                 text: `Release plan "${name}" has been removed from ${featureName} in ${environment}`,
                 type: 'success',
             });
+
+            trackEvent('release-management', {
+                props: {
+                    eventType: 'remove-plan',
+                    plan: name,
+                },
+            });
+
             refetch();
             setRemoveOpen(false);
         } catch (error: unknown) {
@@ -129,6 +139,15 @@ export const ReleasePlan = ({
                 text: `Milestone "${milestone.name}" has started`,
                 type: 'success',
             });
+
+            trackEvent('release-management', {
+                props: {
+                    eventType: 'start-milestone',
+                    plan: name,
+                    milestone: milestone.name,
+                },
+            });
+
             refetch();
         } catch (error: unknown) {
             setToastApiError(formatUnknownError(error));
